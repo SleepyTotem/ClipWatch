@@ -1,0 +1,79 @@
+<Window x:Class="ClipWatch.PlaybackWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:ClipWatch"
+        Title="ClipWatch playback" Width="1120" Height="700"
+        WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="Manual"
+        Background="{StaticResource Ink0}" Foreground="{StaticResource Text}"
+        FontFamily="{StaticResource UiFont}" FontSize="13"
+        ShowInTaskbar="False" FocusManager.IsFocusScope="True">
+
+    <Border BorderBrush="{StaticResource Line}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Grid Background="Black" ClipToBounds="True">
+                <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Manual"
+                              ScrubbingEnabled="True" Stretch="Uniform"
+                              MediaOpened="Player_MediaOpened" MediaEnded="Player_MediaEnded"
+                              MediaFailed="Player_MediaFailed"/>
+                <Border Background="Transparent" MouseLeftButtonUp="Player_Click"/>
+                <TextBlock x:Name="PlayerNotice" Visibility="Collapsed"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Foreground="{StaticResource Muted}" TextWrapping="Wrap"
+                           MaxWidth="440" TextAlignment="Center" IsHitTestVisible="False"/>
+            </Grid>
+
+            <Border x:Name="Deck" Grid.Row="1" Background="{StaticResource Ink1}"
+                    BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0">
+                <Grid Margin="22,14,22,16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Button x:Name="PlayButton" Content="&#xE768;" Style="{StaticResource TransportButton}"
+                                Click="PlayPause_Click" ToolTip="Play / pause (Space)"
+                                AutomationProperties.Name="Play or pause"
+                                VerticalAlignment="Top" Margin="0,0,14,0"/>
+                        <local:SeekBar x:Name="Seek" Grid.Column="1"/>
+                    </Grid>
+
+                    <Grid Grid.Row="1" Margin="58,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                            <TextBlock x:Name="TimeLabel" Text="0:00 / 0:00" FontSize="12.5"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock x:Name="TempNotice" Text="Click outside or press Esc to discard"
+                                       Foreground="{StaticResource Faint}" FontSize="11" Margin="0,3,0,0"/>
+                            <TextBlock x:Name="StatusText" Foreground="{StaticResource Faint}"
+                                       FontSize="11" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="Discard" Style="{StaticResource GhostButton}"
+                                    Click="Discard_Click" Height="38" Width="96"/>
+                            <Button Content="Open in editor" Click="Edit_Click" Height="38"
+                                    Margin="10,0,0,0"/>
+                            <Button x:Name="KeepButton" Content="Keep clip" Style="{StaticResource AccentButton}"
+                                    Click="Keep_Click" Height="38" Width="118" Margin="10,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

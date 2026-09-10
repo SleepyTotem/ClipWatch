@@ -1,0 +1,71 @@
+<Window x:Class="ClipWatch.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ClipWatch" Height="820" Width="1320"
+        MinHeight="560" MinWidth="920"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen"
+        Style="{StaticResource AppWindow}">
+
+  <DockPanel>
+
+    <Border x:Name="TitleBar" DockPanel.Dock="Top"
+            Height="{StaticResource TitleBarHeight}"
+            Background="{StaticResource Ink0}"
+            BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,0,1"
+            MouseLeftButtonDown="TitleBar_Drag">
+      <Grid>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+          <Image x:Name="TitleLogo" Width="15" Height="15" VerticalAlignment="Center"
+                 RenderOptions.BitmapScalingMode="HighQuality" Margin="0,0,9,0"/>
+          <TextBlock Text="ClipWatch" VerticalAlignment="Center" FontSize="11.5"
+                     FontWeight="SemiBold" Foreground="{StaticResource Faint}"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+          <Button Content="&#xE921;" Style="{StaticResource CaptionButton}"
+                  Click="Minimise_Click" ToolTip="Minimise"/>
+          <Button x:Name="MaxButton" Content="&#xE922;" Style="{StaticResource CaptionButton}"
+                  Click="Maximise_Click" ToolTip="Maximise"/>
+          <Button Content="&#xE8BB;" Style="{StaticResource CaptionCloseButton}"
+                  Click="CloseToTray_Click" ToolTip="Hide to tray"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Grid Background="{StaticResource Ink0}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="196"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Background="{StaticResource Ink1}"
+                BorderBrush="{StaticResource LineSoft}" BorderThickness="0,0,1,0">
+            <DockPanel LastChildFill="True">
+
+                <StackPanel DockPanel.Dock="Top" Margin="0,16,0,0">
+
+                    <StackPanel Margin="24,0,16,0">
+                        <TextBlock Text="STATUS" Style="{StaticResource RailStatusCaption}"/>
+                        <TextBlock x:Name="StatusHeadline" Text="Starting..."
+                                   Style="{StaticResource RailStatus}"/>
+                    </StackPanel>
+
+                    <Rectangle Height="1" Fill="{StaticResource LineSoft}" Margin="16,16,16,10"/>
+
+                    <RadioButton x:Name="NavClips" Style="{StaticResource NavButton}"
+                                 Tag="&#xE714;" Content="Clips" IsChecked="True" GroupName="Nav"
+                                 Checked="NavClips_Checked"/>
+                    <RadioButton x:Name="NavSettings" Style="{StaticResource NavButton}"
+                                 Tag="&#xE713;" Content="Settings" GroupName="Nav"
+                                 Checked="NavSettings_Checked"/>
+                </StackPanel>
+
+                <Grid/>
+            </DockPanel>
+        </Border>
+
+        <ContentControl x:Name="Host" Grid.Column="1"/>
+    </Grid>
+  </DockPanel>
+</Window>

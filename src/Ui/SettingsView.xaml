@@ -1,0 +1,336 @@
+<UserControl x:Class="ClipWatch.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+
+        <Style x:Key="SectionGlyph" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource IconFont}"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+            <Setter Property="Width" Value="26"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </UserControl.Resources>
+
+    <DockPanel Background="{StaticResource Ink0}">
+
+        <Border DockPanel.Dock="Bottom" Background="{StaticResource Ink1}"
+                BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0">
+
+            <Grid Margin="32,14,32,14" MaxWidth="900" HorizontalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" Grid.Column="0">
+                    <Button Content="Save settings" Style="{StaticResource AccentButton}"
+                            Click="SaveSettings_Click" Width="150" Height="40"/>
+                    <Button Content="Open config folder" Style="{StaticResource GhostButton}"
+                            Click="OpenConfigFolder_Click" Margin="10,0,0,0" Height="40"/>
+                    <TextBlock x:Name="SaveNotice" VerticalAlignment="Center" Margin="14,0,0,0"
+                               Foreground="{StaticResource Accent}" FontSize="12"
+                               FontWeight="SemiBold"/>
+                </StackPanel>
+
+                <TextBlock Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center"
+                           MaxWidth="260" Margin="20,0,0,0" TextAlignment="Right"
+                           Foreground="{StaticResource Faint}" FontSize="11" TextWrapping="Wrap"
+                           Text="Connection, hotkey and poll changes apply on restart."/>
+            </Grid>
+        </Border>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="32,26,32,26" MaxWidth="900" HorizontalAlignment="Center">
+
+                <TextBlock Text="Settings" Style="{StaticResource H1}" Margin="0,0,0,20"/>
+
+                <Border Style="{StaticResource Section}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE946;" Style="{StaticResource SectionGlyph}"/>
+                            <StackPanel>
+                                <TextBlock Text="Status" Style="{StaticResource H2}"/>
+                                <TextBlock Style="{StaticResource Sub}"
+                                           Text="What ClipWatch can see right now."/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Rectangle Style="{StaticResource Rule}"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" x:Name="StatusLeft"/>
+                            <StackPanel Grid.Column="1" x:Name="StatusRight"/>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                            <Button Content="Reset detection" Click="ResetDetection_Click"/>
+                            <Button Content="Toggle replay buffer" Click="ToggleBuffer_Click" Margin="10,0,0,0"/>
+                            <Button Content="Save replay now" Click="SaveNow_Click" Margin="10,0,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Section}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE7FC;" Style="{StaticResource SectionGlyph}"/>
+                            <StackPanel>
+                                <TextBlock Text="Detected games" Style="{StaticResource H2}"/>
+                                <TextBlock Style="{StaticResource Sub}" MaxWidth="700"
+                                           HorizontalAlignment="Left"
+                                           Text="Only these processes start the replay buffer. Focus a game and press the learn hotkey (Shift+F7 by default) to add it."/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Rectangle Style="{StaticResource Rule}"/>
+
+                        <Border Background="{StaticResource Ink2}" CornerRadius="10" Padding="14,12"
+                                BorderBrush="{StaticResource LineSoft}" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Focused window right now" FontSize="11"
+                                           Foreground="{StaticResource Faint}"/>
+                                <TextBlock x:Name="ForegroundLabel" FontSize="15" FontWeight="SemiBold"
+                                           Margin="0,4,0,0" Text="—"/>
+                                <TextBlock x:Name="ForegroundVerdict" FontSize="11.5" Margin="0,3,0,0"
+                                           Foreground="{StaticResource Faint}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <ListBox x:Name="GamesList" Height="180" Margin="0,14,0,0"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Content="Add manually..." Click="AddGame_Click"/>
+                            <Button Content="Remove selected" Click="RemoveGame_Click" Margin="10,0,0,0"/>
+                            <Button Content="Clear list" Style="{StaticResource DangerButton}"
+                                    Click="ClearGames_Click" Margin="10,0,0,0"/>
+                            <Button Content="Open games.json" Style="{StaticResource GhostButton}"
+                                    Click="OpenGamesFile_Click" Margin="10,0,0,0"/>
+                        </StackPanel>
+
+                        <Rectangle Style="{StaticResource Rule}"/>
+
+                        <CheckBox x:Name="AlwaysClipCheck" Margin="0,0,0,0"
+                                  Content="Always clipping (keep the replay buffer running at all times)"/>
+                        <TextBlock Style="{StaticResource Hint}" Margin="48,4,0,0"
+                                   Text="Ignores the games list entirely. Uses GPU and memory continuously, but nothing is ever missed."/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Section}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE767;" Style="{StaticResource SectionGlyph}"/>
+                            <StackPanel>
+                                <TextBlock Text="Audio layers" Style="{StaticResource H2}"/>
+                                <TextBlock Style="{StaticResource Sub}" MaxWidth="700"
+                                           HorizontalAlignment="Left"
+                                           Text="Record each app onto its own audio track so you can mute or rebalance it after the fact — drop Discord out of a clip, or turn Spotify down, without losing the game audio."/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Rectangle Style="{StaticResource Rule}"/>
+
+                        <CheckBox x:Name="AudioLayersCheck"
+                                  Content="Record apps on separate audio tracks"/>
+                        <TextBlock Style="{StaticResource Hint}" Margin="48,4,0,0"
+                                   Text="Switches OBS's recording output to Advanced mode so it can write more than one track. Your encoder is left alone, and turning this off puts the output mode back."/>
+
+                        <Border x:Name="AudioLayersPanel" Margin="0,14,0,0">
+                            <StackPanel>
+                                <ListBox x:Name="AudioLayersList" Height="150"/>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                    <Button Content="Add app..." Click="AddAudioLayer_Click"/>
+                                    <Button Content="Remove selected" Click="RemoveAudioLayer_Click" Margin="10,0,0,0"/>
+                                    <Button Content="Re-apply to OBS" Style="{StaticResource GhostButton}"
+                                            Click="ReapplyAudioLayers_Click" Margin="10,0,0,0"/>
+                                </StackPanel>
+
+                                <TextBlock x:Name="AudioLayersStatus" Style="{StaticResource Hint}"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Section}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE71B;" Style="{StaticResource SectionGlyph}"/>
+                            <StackPanel>
+                                <TextBlock Text="OBS connection" Style="{StaticResource H2}"/>
+                                <TextBlock Style="{StaticResource Sub}"
+                                           Text="Where the websocket lives. The defaults are right for a local OBS."/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Rectangle Style="{StaticResource Rule}"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="14"/>
+                                <ColumnDefinition Width="1*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Host" Style="{StaticResource Label}" Margin="0,0,0,5"/>
+                                <TextBox x:Name="HostBox"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Port" Style="{StaticResource Label}" Margin="0,0,0,5"/>
+                                <TextBox x:Name="PortBox"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Password (leave blank if auth is off)" Style="{StaticResource Label}"/>
+                        <TextBox x:Name="PasswordBox"/>
+
+                        <Rectangle Style="{StaticResource Rule}"/>
+
+                        <CheckBox x:Name="AutoConfigureCheck"
+                                  Content="Configure OBS automatically (websocket + 60s replay buffer)"/>
+                        <CheckBox x:Name="AutoLaunchCheck"
+                                  Content="Start OBS if it isn't already running"/>
+                        <TextBlock x:Name="ObsSetupText" Style="{StaticResource Hint}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Section}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE916;" Style="{StaticResource SectionGlyph}"/>
+                            <StackPanel>
+                                <TextBlock Text="Behaviour" Style="{StaticResource H2}"/>
+                                <TextBlock Style="{StaticResource Sub}"
+                                           Text="Timing, folders and tools."/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Rectangle Style="{StaticResource Rule}"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="14"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Foreground poll interval (ms)" Style="{StaticResource Label}" Margin="0,0,0,5"/>
+                                <TextBox x:Name="PollBox"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Keep buffering after exit (seconds)" Style="{StaticResource Label}" Margin="0,0,0,5"/>
+                                <TextBox x:Name="StopDelayBox"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Clips folder override (blank = ask OBS)" Style="{StaticResource Label}"/>
+                        <TextBox x:Name="ClipsFolderBox"/>
+
+                        <TextBlock Text="ffmpeg folder (blank = search PATH)" Style="{StaticResource Label}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="FfmpegBox" Grid.Column="0"/>
+                            <Button x:Name="InstallFfmpegButton" Grid.Column="1" Content="Download ffmpeg"
+                                    Click="InstallFfmpeg_Click" Margin="10,0,0,0"/>
+                        </Grid>
+                        <TextBlock x:Name="FfmpegProgressText" Style="{StaticResource Hint}"/>
+
+                        <CheckBox x:Name="AutoInstallCheck" Margin="0,12,0,0"
+                                  Content="Download ffmpeg automatically if it's missing"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Section}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE7ED;" Style="{StaticResource SectionGlyph}"/>
+                            <StackPanel>
+                                <TextBlock Text="Notifications" Style="{StaticResource H2}"/>
+                                <TextBlock Style="{StaticResource Sub}"
+                                           Text="What ClipWatch does when a clip lands."/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Rectangle Style="{StaticResource Rule}"/>
+
+                        <CheckBox x:Name="ToastsCheck" Content="Show on-screen notifications"/>
+
+                        <TextBlock Text="How long they stay up (ms)" Style="{StaticResource Label}"/>
+                        <TextBox x:Name="ToastDurationBox" HorizontalAlignment="Left" Width="180"/>
+
+                        <Rectangle Style="{StaticResource Rule}"/>
+
+                        <CheckBox x:Name="SoundsCheck" Content="Play a chime"/>
+
+                        <TextBlock Text="Chime volume" Style="{StaticResource Label}"/>
+                        <Grid HorizontalAlignment="Left" Width="330">
+                            <Slider x:Name="VolumeSlider" Minimum="0" Maximum="1" Margin="0,0,54,0"/>
+                            <TextBlock x:Name="VolumeLabel" HorizontalAlignment="Right"
+                                       VerticalAlignment="Center" FontSize="12"
+                                       Foreground="{StaticResource Muted}"/>
+                        </Grid>
+                        <Button Content="Test chime" Style="{StaticResource GhostButton}"
+                                Click="TestSound_Click" HorizontalAlignment="Left" Margin="0,12,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Section}" Margin="0,0,0,4">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE765;" Style="{StaticResource SectionGlyph}"/>
+                            <StackPanel>
+                                <TextBlock Text="Hotkeys" Style="{StaticResource H2}"/>
+                                <TextBlock Style="{StaticResource Sub}" MaxWidth="700"
+                                           HorizontalAlignment="Left"
+                                           Text="Save Replay is best bound inside OBS (Settings → Hotkeys) so it works globally. The learn hotkey is handled here."/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Rectangle Style="{StaticResource Rule}"/>
+
+                        <CheckBox x:Name="LearnHotkeyCheck" Content="Enable the learn hotkey"/>
+                        <Grid Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="14"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Virtual-key code (0x76 = F7)" Style="{StaticResource Label}" Margin="0,10,0,5"/>
+                                <TextBox x:Name="LearnKeyBox"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Modifiers (1 Alt, 2 Ctrl, 4 Shift, 8 Win — added together)"
+                                           Style="{StaticResource Label}" Margin="0,10,0,5"/>
+                                <TextBox x:Name="LearnModBox"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Rectangle Style="{StaticResource Rule}"/>
+
+                        <CheckBox x:Name="PlaybackHotkeyCheck"
+                                  Content="Enable the instant-replay hotkey (Shift+F9)"/>
+                        <TextBlock Text="Instant-replay virtual-key code (0x78 = F9)" Style="{StaticResource Label}"/>
+                        <TextBox x:Name="PlaybackKeyBox" HorizontalAlignment="Left" Width="180"/>
+
+                        <Rectangle Style="{StaticResource Rule}"/>
+
+                        <CheckBox x:Name="OwnSaveHotkeyCheck"
+                                  Content="Let ClipWatch own the save hotkey instead of OBS"/>
+                        <TextBlock Text="Save hotkey virtual-key code (0x77 = F8)" Style="{StaticResource Label}"/>
+                        <TextBox x:Name="SaveKeyBox" HorizontalAlignment="Left" Width="180"/>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

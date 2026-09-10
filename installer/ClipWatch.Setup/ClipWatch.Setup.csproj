@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>ClipWatch-Setup</AssemblyName>
+    <RootNamespace>ClipWatch.Setup</RootNamespace>
+    <ApplicationIcon>$(MSBuildThisFileDirectory)..\..\resources\clipwatch.ico</ApplicationIcon>
+    <Product>ClipWatch Setup</Product>
+    <Company>ClipWatch</Company>
+    <Description>Installs ClipWatch.</Description>
+
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <PublishTrimmed>true</PublishTrimmed>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <DebugType>none</DebugType>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(PayloadZip)" LogicalName="payload.zip"
+                      Condition="'$(PayloadZip)' != '' And Exists('$(PayloadZip)')" />
+    <EmbeddedResource Include="$(InstallScript)" LogicalName="install.ps1"
+                      Condition="'$(InstallScript)' != '' And Exists('$(InstallScript)')" />
+    <EmbeddedResource Include="$(UninstallScript)" LogicalName="uninstall.ps1"
+                      Condition="'$(UninstallScript)' != '' And Exists('$(UninstallScript)')" />
+  </ItemGroup>
+
+</Project>

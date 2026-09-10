@@ -1,0 +1,67 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>ClipWatch</AssemblyName>
+    <RootNamespace>ClipWatch</RootNamespace>
+
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+    <StartupObject>ClipWatch.Program</StartupObject>
+    <ApplicationIcon>resources\clipwatch.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <Product>ClipWatch</Product>
+    <Company>ClipWatch</Company>
+    <Description>Automatic game clip capture and trimming for OBS.</Description>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <DebugType>embedded</DebugType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(PublishSingleFile)' == 'true'">
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(PublishSingleFile)' == 'true' And '$(SelfContained)' == 'true'">
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+
+    <Using Remove="System.Drawing" />
+    <Using Remove="System.Windows.Forms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="tests\**\*.cs" />
+
+    <Compile Remove="installer\**\*.cs" />
+    <Compile Remove="dist\**\*.cs" />
+
+    <EmbeddedResource Include="resources\clipwatch.ico" LogicalName="ClipWatch.clipwatch.ico" />
+  </ItemGroup>
+
+  <Target Name="PackageRelease"
+          AfterTargets="Build"
+          Condition="'$(Configuration)' == 'Release'
+                     And '$(ClipWatchPackaging)' != 'true'
+                     And '$(SkipPackaging)' != 'true'
+                     And '$(DesignTimeBuild)' != 'true'">
+    <Message Importance="high" Text="Packaging release artifacts into dist\ ..." />
+    <Exec WorkingDirectory="$(MSBuildThisFileDirectory)"
+          Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)build.ps1&quot; -Version $(Version)" />
+  </Target>
+
+</Project>

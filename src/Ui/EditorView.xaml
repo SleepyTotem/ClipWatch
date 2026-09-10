@@ -1,0 +1,376 @@
+<UserControl x:Class="ClipWatch.EditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:ClipWatch">
+
+    <UserControl.Resources>
+
+        <Style x:Key="PanelHeading" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource Faint}"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+
+        <Style x:Key="Segment" TargetType="RadioButton">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Grid Height="28">
+                            <Border x:Name="Sel" CornerRadius="6" Opacity="0">
+                                <Border.Background>
+                                    <SolidColorBrush Color="{StaticResource AccentC}"/>
+                                </Border.Background>
+                            </Border>
+                            <Border x:Name="Hi" CornerRadius="6"
+                                    Background="{StaticResource Sheen}" Opacity="0"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Sel" Property="Opacity" Value="1"/>
+                                <Setter Property="Foreground" Value="{StaticResource OnInk}"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                            <EventTrigger RoutedEvent="Mouse.MouseEnter">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hi" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.1"
+                                                         EasingFunction="{StaticResource Out}"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                            <EventTrigger RoutedEvent="Mouse.MouseLeave">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Hi" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.16"
+                                                         EasingFunction="{StaticResource Out}"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SegmentBar" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Field}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="7"/>
+            <Setter Property="Padding" Value="2"/>
+        </Style>
+    </UserControl.Resources>
+
+    <DockPanel Background="{StaticResource Ink0}">
+
+        <Grid DockPanel.Dock="Top" Margin="26,20,26,12">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="&#xE72B;" Style="{StaticResource IconControl}"
+                        ToolTip="Back to clips" AutomationProperties.Name="Back to clips"
+                        Click="Back_Click" Margin="0,0,12,0"/>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="EDITING" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{StaticResource Accent}"/>
+                    <TextBlock x:Name="HeaderName" Style="{StaticResource H2}"
+                               FontSize="18" Margin="0,1,0,0"
+                               TextTrimming="CharacterEllipsis" MaxWidth="620"/>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+
+        <Border DockPanel.Dock="Right" Width="330" Background="{StaticResource Ink1}"
+                BorderBrush="{StaticResource LineSoft}" BorderThickness="1"
+                CornerRadius="14" Margin="0,0,22,22">
+            <DockPanel>
+
+                <Border DockPanel.Dock="Bottom" Padding="20,14,20,16"
+                        BorderBrush="{StaticResource LineSoft}" BorderThickness="0,1,0,0">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,10">
+                            <TextBlock Text="Estimated size" FontSize="11.5"
+                                       Foreground="{StaticResource Faint}"/>
+                            <TextBlock x:Name="SizeEstimate" HorizontalAlignment="Right"
+                                       FontSize="11.5" FontWeight="SemiBold"
+                                       Foreground="{StaticResource Muted}" Text="—"/>
+                        </Grid>
+
+                        <Button x:Name="SaveButton" Content="Export clip"
+                                Style="{StaticResource AccentButton}"
+                                Click="Save_Click" Height="42"/>
+
+                        <Button x:Name="ConvertButton" Content="Convert to MP4" Click="Convert_Click"
+                                Margin="0,10,0,0" Height="36" Visibility="Collapsed"/>
+
+                        <TextBlock x:Name="StatusText" Style="{StaticResource Hint}"/>
+                    </StackPanel>
+                </Border>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="20,18,20,18">
+
+                        <TextBlock Text="CLIP" Style="{StaticResource PanelHeading}"/>
+                        <TextBox x:Name="NameBox"/>
+
+                        <Rectangle Style="{StaticResource Rule}"/>
+
+                        <TextBlock Text="TRIM" Style="{StaticResource PanelHeading}"/>
+                        <Border Background="{StaticResource Ink2}" CornerRadius="11" Padding="15,13"
+                                BorderBrush="{StaticResource LineSoft}" BorderThickness="1">
+                            <StackPanel>
+                                <Grid>
+                                    <TextBlock Text="In" Foreground="{StaticResource Faint}" FontSize="12"/>
+                                    <TextBlock x:Name="InLabel" HorizontalAlignment="Right" FontSize="12"/>
+                                </Grid>
+                                <Grid Margin="0,8,0,0">
+                                    <TextBlock Text="Out" Foreground="{StaticResource Faint}" FontSize="12"/>
+                                    <TextBlock x:Name="OutLabel" HorizontalAlignment="Right" FontSize="12"/>
+                                </Grid>
+
+                                <Rectangle Style="{StaticResource Rule}" Margin="0,12"/>
+
+                                <Grid>
+                                    <TextBlock Text="Length" Foreground="{StaticResource Muted}" FontSize="12"/>
+                                    <TextBlock x:Name="TrimmedLengthLabel" HorizontalAlignment="Right"
+                                               FontSize="15" FontWeight="SemiBold"
+                                               Foreground="{StaticResource Accent}"/>
+                                </Grid>
+                                <Grid Margin="0,6,0,0">
+                                    <TextBlock Text="Original" Foreground="{StaticResource Faint}" FontSize="11.5"/>
+                                    <TextBlock x:Name="OriginalLengthLabel" HorizontalAlignment="Right"
+                                               FontSize="11.5" Foreground="{StaticResource Faint}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Button Content="Reset trim" Style="{StaticResource GhostButton}"
+                                Click="ResetTrim_Click" Margin="0,8,0,0"
+                                HorizontalAlignment="Left"/>
+
+                        <Rectangle Style="{StaticResource Rule}"/>
+
+                        <Grid Margin="0,0,0,8">
+                            <TextBlock Text="AUDIO" Style="{StaticResource PanelHeading}" Margin="0"/>
+                            <TextBlock x:Name="AudioTrackCount" HorizontalAlignment="Right"
+                                       FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{StaticResource Faint}"/>
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="PreviewMuteButton" Grid.Column="0" Content="&#xE767;"
+                                    Style="{StaticResource IconControl}" Width="28" Height="28"
+                                    FontSize="14" Click="PreviewMute_Click"
+                                    ToolTip="Mute the preview"/>
+                            <Slider x:Name="PreviewVolume" Grid.Column="1" Minimum="0" Maximum="1"
+                                    Margin="8,0,8,0" VerticalAlignment="Center"
+                                    ValueChanged="PreviewVolume_Changed"/>
+                            <TextBlock x:Name="PreviewVolumeLabel" Grid.Column="2" Width="34"
+                                       TextAlignment="Right" VerticalAlignment="Center"
+                                       FontSize="11" Foreground="{StaticResource Faint}"/>
+                        </Grid>
+
+                        <ItemsControl x:Name="AudioTracks" Margin="0,12,0,0"/>
+
+                        <TextBlock x:Name="AudioNotice" Style="{StaticResource Hint}"/>
+
+                        <Rectangle Style="{StaticResource Rule}"/>
+
+                        <TextBlock Text="EXPORT" Style="{StaticResource PanelHeading}"/>
+
+                        <TextBlock Text="Mode" Style="{StaticResource Label}" Margin="0,0,0,5"/>
+                        <Border Style="{StaticResource SegmentBar}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <RadioButton x:Name="ModeFast" Grid.Column="0" Style="{StaticResource Segment}"
+                                             GroupName="Mode" Content="Fast" IsChecked="True"
+                                             Checked="ExportOption_Changed"
+                                             ToolTip="Stream copy. Instant, but the start snaps to the nearest keyframe."/>
+                                <RadioButton x:Name="ModePrecise" Grid.Column="1" Style="{StaticResource Segment}"
+                                             GroupName="Mode" Content="Precise"
+                                             Checked="ExportOption_Changed"
+                                             ToolTip="Re-encodes. Frame-accurate, but takes real time."/>
+                            </Grid>
+                        </Border>
+
+                        <TextBlock Text="Format" Style="{StaticResource Label}" Margin="0,14,0,5"/>
+                        <Border Style="{StaticResource SegmentBar}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <RadioButton x:Name="FormatKeep" Grid.Column="0" Style="{StaticResource Segment}"
+                                             GroupName="Format" Content="Same" IsChecked="True"
+                                             Checked="ExportOption_Changed"/>
+                                <RadioButton x:Name="FormatMp4" Grid.Column="1" Style="{StaticResource Segment}"
+                                             GroupName="Format" Content="MP4"
+                                             Checked="ExportOption_Changed"/>
+                                <RadioButton x:Name="FormatMkv" Grid.Column="2" Style="{StaticResource Segment}"
+                                             GroupName="Format" Content="MKV"
+                                             Checked="ExportOption_Changed"/>
+                            </Grid>
+                        </Border>
+
+                        <TextBlock Text="Resolution" Style="{StaticResource Label}" Margin="0,14,0,5"/>
+                        <Border Style="{StaticResource SegmentBar}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <RadioButton x:Name="ResOriginal" Grid.Column="0" Style="{StaticResource Segment}"
+                                             GroupName="Res" Content="Source" IsChecked="True"
+                                             Checked="ExportOption_Changed"/>
+                                <RadioButton x:Name="Res1440" Grid.Column="1" Style="{StaticResource Segment}"
+                                             GroupName="Res" Content="1440p" Checked="ExportOption_Changed"/>
+                                <RadioButton x:Name="Res1080" Grid.Column="2" Style="{StaticResource Segment}"
+                                             GroupName="Res" Content="1080p" Checked="ExportOption_Changed"/>
+                                <RadioButton x:Name="Res720" Grid.Column="3" Style="{StaticResource Segment}"
+                                             GroupName="Res" Content="720p" Checked="ExportOption_Changed"/>
+                            </Grid>
+                        </Border>
+
+                        <TextBlock x:Name="QualityLabel" Text="Quality" Style="{StaticResource Label}" Margin="0,14,0,5"/>
+                        <Border x:Name="QualityBar" Style="{StaticResource SegmentBar}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <RadioButton x:Name="QualityHigh" Grid.Column="0" Style="{StaticResource Segment}"
+                                             GroupName="Quality" Content="High" IsChecked="True"
+                                             Checked="ExportOption_Changed"/>
+                                <RadioButton x:Name="QualityBalanced" Grid.Column="1" Style="{StaticResource Segment}"
+                                             GroupName="Quality" Content="Balanced"
+                                             Checked="ExportOption_Changed"/>
+                                <RadioButton x:Name="QualitySmall" Grid.Column="2" Style="{StaticResource Segment}"
+                                             GroupName="Quality" Content="Small"
+                                             Checked="ExportOption_Changed"/>
+                            </Grid>
+                        </Border>
+                        <TextBlock x:Name="QualityHint" Style="{StaticResource Hint}"
+                                   Text="Quality and resolution apply when re-encoding."/>
+
+                        <Rectangle Style="{StaticResource Rule}"/>
+
+                        <TextBlock Text="DESTINATION" Style="{StaticResource PanelHeading}"/>
+                        <Border Style="{StaticResource SegmentBar}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <RadioButton x:Name="DestNew" Grid.Column="0" Style="{StaticResource Segment}"
+                                             GroupName="Dest" Content="New file" IsChecked="True"
+                                             Checked="ExportOption_Changed"/>
+                                <RadioButton x:Name="DestReplace" Grid.Column="1" Style="{StaticResource Segment}"
+                                             GroupName="Dest" Content="Replace"
+                                             Checked="ExportOption_Changed"/>
+                                <RadioButton x:Name="DestFolder" Grid.Column="2" Style="{StaticResource Segment}"
+                                             GroupName="Dest" Content="Folder..."
+                                             Checked="ExportOption_Changed"/>
+                            </Grid>
+                        </Border>
+                        <TextBlock x:Name="DestFolderLabel" Style="{StaticResource Hint}"
+                                   Visibility="Collapsed"/>
+
+                        <TextBlock Text="When it finishes" Style="{StaticResource Label}" Margin="0,14,0,5"/>
+                        <Border Style="{StaticResource SegmentBar}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <RadioButton x:Name="AfterNothing" Grid.Column="0" Style="{StaticResource Segment}"
+                                             GroupName="After" Content="Nothing" IsChecked="True"
+                                             Checked="ExportOption_Changed"/>
+                                <RadioButton x:Name="AfterOpen" Grid.Column="1" Style="{StaticResource Segment}"
+                                             GroupName="After" Content="Open"
+                                             Checked="ExportOption_Changed"/>
+                                <RadioButton x:Name="AfterCopy" Grid.Column="2" Style="{StaticResource Segment}"
+                                             GroupName="After" Content="Copy path"
+                                             Checked="ExportOption_Changed"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <Grid Margin="26,0,18,22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="#000000" CornerRadius="14" ClipToBounds="True"
+                    BorderBrush="{StaticResource LineSoft}" BorderThickness="1">
+                <Grid>
+                    <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Manual"
+                                  ScrubbingEnabled="True" Stretch="Uniform"
+                                  MediaOpened="Player_MediaOpened"
+                                  MediaEnded="Player_MediaEnded"
+                                  MediaFailed="Player_MediaFailed"/>
+
+                    <Border x:Name="ClickCatcher" Background="Transparent" Cursor="Hand"
+                            MouseLeftButtonUp="Video_Click"/>
+
+                    <TextBlock x:Name="PlayerNotice" Visibility="Collapsed"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Foreground="{StaticResource Muted}" TextWrapping="Wrap"
+                               MaxWidth="460" TextAlignment="Center" IsHitTestVisible="False"/>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="1" Margin="0,16,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Button x:Name="PlayButton" Content="&#xE768;" Style="{StaticResource TransportButton}"
+                        Click="PlayPause_Click" ToolTip="Play / pause (Space)"
+                        AutomationProperties.Name="Play or pause"
+                        VerticalAlignment="Top" Margin="0,0,14,0"/>
+
+                <StackPanel Grid.Column="1">
+                    <local:SeekBar x:Name="Timeline" IsTrimEnabled="True"/>
+                    <Grid Margin="6,10,6,0">
+                        <TextBlock Text="Drag the ends of the strip to trim"
+                                   FontSize="11.5" Foreground="{StaticResource Faint}"/>
+                        <TextBlock x:Name="TimeLabel" HorizontalAlignment="Right"
+                                   Foreground="{StaticResource Muted}" FontSize="12"
+                                   Text="0:00.0 / 0:00.0"/>
+                    </Grid>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </DockPanel>
+</UserControl>
