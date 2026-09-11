@@ -13,7 +13,6 @@ public partial class PlaybackWindow : Window
 {
     private readonly Controller _controller;
     private readonly DispatcherTimer _tick;
-    private bool _closing;
     private bool _mediaReady;
 
     private string _tempPath = "";
@@ -60,7 +59,7 @@ public partial class PlaybackWindow : Window
         KeptPath = null;
         StatusText.Text = "";
         KeepButton.IsEnabled = true;
-        TempNotice.Text = "Click outside or press Esc to discard";
+        TempNotice.Text = "Press Esc or Discard to throw this replay away";
 
         if (!File.Exists(tempPath) || !Ffmpeg.IsPlayable(tempPath))
         {
@@ -209,7 +208,8 @@ public partial class PlaybackWindow : Window
             var target = ClipOps.UniquePath(folder, name, Path.GetExtension(_tempPath));
 
             ReleasePlayer();
-            File.Move(_tempPath, target);
+            using (Ffmpeg.ReleaseFile(_tempPath))
+                ClipOps.MoveWithRetry(_tempPath, target);
 
             _kept = true;
             KeptPath = target;
@@ -260,6 +260,7 @@ public partial class PlaybackWindow : Window
             var path = _tempPath;
             DiscardCompletion = Task.Run(async () =>
             {
+                using var hold = Ffmpeg.ReleaseFile(path);
                 for (var attempt = 0; attempt < 10; attempt++)
                 {
                     try
@@ -352,15 +353,4 @@ public partial class PlaybackWindow : Window
         catch (EntryPointNotFoundException) { }
     }
 
-    protected override void OnDeactivated(EventArgs e)
-    {
-        base.OnDeactivated(e);
-        if (IsVisible && !_closing) Close();
-    }
-
-    protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
-    {
-        _closing = true;
-        base.OnClosing(e);
-    }
 }

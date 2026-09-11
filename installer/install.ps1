@@ -15,7 +15,7 @@ if (-not (Test-Path $source)) {
 
 $version = if (Test-Path (Join-Path $here 'version.txt')) {
     (Get-Content (Join-Path $here 'version.txt') -Raw).Trim()
-} else { '1.0.0' }
+} else { '1.1.0' }
 
 if ($AllUsers) {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()

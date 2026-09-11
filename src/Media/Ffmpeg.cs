@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -7,6 +8,51 @@ namespace ClipWatch;
 public static class Ffmpeg
 {
     private static readonly SemaphoreSlim ThumbnailWork = new(1, 1);
+
+    // Background jobs (probe, thumbnail, filmstrip) and the file each one is reading, so they
+    // can be stopped before that file is moved or deleted — otherwise Windows refuses with
+    // "the file is open in ffmpeg".
+    private static readonly ConcurrentDictionary<Process, string> Readers = new();
+    private static readonly ConcurrentDictionary<string, byte> Held = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Kills any background ffmpeg job reading <paramref name="path"/> and stops new ones
+    /// starting on it until the returned handle is disposed.
+    /// </summary>
+    public static IDisposable ReleaseFile(string path)
+    {
+        var target = Normalise(path);
+        if (target == null) return new FileHold(null);
+
+        Held[target] = 0;
+
+        foreach (var (proc, file) in Readers)
+        {
+            if (!string.Equals(file, target, StringComparison.OrdinalIgnoreCase)) continue;
+            try
+            {
+                proc.Kill(entireProcessTree: true);
+                proc.WaitForExit(3000);
+            }
+            catch { }
+        }
+
+        return new FileHold(target);
+    }
+
+    private sealed class FileHold(string? path) : IDisposable
+    {
+        public void Dispose()
+        {
+            if (path != null) Held.TryRemove(path, out _);
+        }
+    }
+
+    private static string? Normalise(string path)
+    {
+        try { return Path.GetFullPath(path); }
+        catch { return null; }
+    }
     public static string? FfmpegPath { get; private set; }
     public static string? FfprobePath { get; private set; }
     public static bool Available => File.Exists(FfmpegPath) && File.Exists(FfprobePath);
@@ -58,7 +104,7 @@ public static class Ffmpeg
         if (FfprobePath == null || !File.Exists(file)) return null;
 
         var args = $"-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 \"{file}\"";
-        var (ok, stdout, _) = await RunAsync(FfprobePath, args, timeout: TimeSpan.FromSeconds(20));
+        var (ok, stdout, _) = await RunAsync(FfprobePath, args, timeout: TimeSpan.FromSeconds(20), input: file);
         if (!ok) return null;
 
         return double.TryParse(stdout.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds)
@@ -77,8 +123,10 @@ public static class Ffmpeg
             acquired = true;
             Directory.CreateDirectory(Path.GetDirectoryName(outJpg)!);
             var args = $"-y -threads 1 -ss {Fmt(at)} -i \"{file}\" -map 0:v:0 -an -frames:v 1 -vf scale=320:-1 -filter_threads 1 -threads 1 -q:v 5 \"{outJpg}\"";
-            var (ok, _, _) = await RunAsync(FfmpegPath, args, token, TimeSpan.FromSeconds(20));
-            return ok && File.Exists(outJpg);
+            var (ok, _, _) = await RunAsync(FfmpegPath, args, token, TimeSpan.FromSeconds(20), file);
+            if (ok && File.Exists(outJpg)) return true;
+            try { File.Delete(outJpg); } catch { }
+            return false;
         }
         catch { return false; }
         finally { if (acquired) ThumbnailWork.Release(); }
@@ -103,8 +151,10 @@ public static class Ffmpeg
             var args = $"-y -threads 1 -i \"{file}\" -map 0:v:0 -an -vf \"{filter}\" " +
                        $"-frames:v 1 -filter_threads 1 -q:v 4 \"{outJpg}\"";
 
-            var (ok, _, _) = await RunAsync(FfmpegPath, args, token, TimeSpan.FromMinutes(3));
-            return ok && File.Exists(outJpg);
+            var (ok, _, _) = await RunAsync(FfmpegPath, args, token, TimeSpan.FromMinutes(3), file);
+            if (ok && File.Exists(outJpg)) return true;
+            try { File.Delete(outJpg); } catch { }
+            return false;
         }
         catch { return false; }
         finally { if (acquired) ThumbnailWork.Release(); }
@@ -180,8 +230,13 @@ public static class Ffmpeg
             : RunAsync(FfprobePath, args, token, timeout);
 
     private static async Task<(bool Ok, string StdOut, string StdErr)> RunAsync(
-        string exe, string args, CancellationToken token = default, TimeSpan? timeout = null)
+        string exe, string args, CancellationToken token = default, TimeSpan? timeout = null,
+        string? input = null)
     {
+        var reading = input == null ? null : Normalise(input);
+        if (reading != null && Held.ContainsKey(reading))
+            return (false, "", "The file is being moved or deleted.");
+
         try
         {
             using var proc = new Process
@@ -197,22 +252,31 @@ public static class Ffmpeg
             };
 
             proc.Start();
-            try { proc.PriorityClass = ProcessPriorityClass.BelowNormal; } catch { }
+            if (reading != null) Readers[proc] = reading;
 
-            var stdout = proc.StandardOutput.ReadToEndAsync();
-            var stderr = proc.StandardError.ReadToEndAsync();
-            using var deadline = CancellationTokenSource.CreateLinkedTokenSource(token);
-            deadline.CancelAfter(timeout ?? TimeSpan.FromMinutes(30));
-            try { await proc.WaitForExitAsync(deadline.Token); }
-            catch (OperationCanceledException)
+            try
             {
-                try { proc.Kill(entireProcessTree: true); } catch { }
-                await proc.WaitForExitAsync();
-                await Task.WhenAll(stdout, stderr);
-                return (false, "", token.IsCancellationRequested ? "Cancelled." : "The media operation timed out.");
-            }
+                try { proc.PriorityClass = ProcessPriorityClass.BelowNormal; } catch { }
 
-            return (proc.ExitCode == 0, await stdout, await stderr);
+                var stdout = proc.StandardOutput.ReadToEndAsync();
+                var stderr = proc.StandardError.ReadToEndAsync();
+                using var deadline = CancellationTokenSource.CreateLinkedTokenSource(token);
+                deadline.CancelAfter(timeout ?? TimeSpan.FromMinutes(30));
+                try { await proc.WaitForExitAsync(deadline.Token); }
+                catch (OperationCanceledException)
+                {
+                    try { proc.Kill(entireProcessTree: true); } catch { }
+                    await proc.WaitForExitAsync();
+                    await Task.WhenAll(stdout, stderr);
+                    return (false, "", token.IsCancellationRequested ? "Cancelled." : "The media operation timed out.");
+                }
+
+                return (proc.ExitCode == 0, await stdout, await stderr);
+            }
+            finally
+            {
+                if (reading != null) Readers.TryRemove(proc, out _);
+            }
         }
         catch (Exception ex)
         {

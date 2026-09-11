@@ -13,6 +13,7 @@ public sealed class GameWatcher
 
     private DateTime? _pendingStopSince;
     private int _consecutiveActivePolls;
+    private System.Diagnostics.Process? _activeProcess;
 
     public bool GameActive { get; private set; }
     public string? ActiveProcessName { get; private set; }
@@ -27,7 +28,7 @@ public sealed class GameWatcher
         _games = games;
         _timer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromMilliseconds(Math.Max(250, config.PollIntervalMs))
+            Interval = TimeSpan.FromMilliseconds(Math.Max(100, config.PollIntervalMs))
         };
         _timer.Tick += (_, _) => Poll();
     }
@@ -42,6 +43,8 @@ public sealed class GameWatcher
     {
         _consecutiveActivePolls = 0;
         _pendingStopSince = null;
+        _activeProcess?.Dispose();
+        _activeProcess = null;
         if (!GameActive) return;
 
         var was = ActiveProcessName;
@@ -57,7 +60,7 @@ public sealed class GameWatcher
 
         if (GameActive)
         {
-            if (IsProcessStillRunning(ActiveProcessName))
+            if (IsGameStillRunning())
             {
                 _pendingStopSince = null;
                 return;
@@ -72,10 +75,11 @@ public sealed class GameWatcher
 
         string? processName = null;
         var looksLikeGame = false;
+        var hwnd = IntPtr.Zero;
 
         try
         {
-            var hwnd = GetForegroundWindow();
+            hwnd = GetForegroundWindow();
             if (hwnd != IntPtr.Zero)
             {
                 processName = GetProcessName(hwnd);
@@ -100,6 +104,7 @@ public sealed class GameWatcher
             GameActive = true;
             ActiveProcessName = processName;
             _pendingStopSince = null;
+            _activeProcess = TryOpenProcess(hwnd);
             StateChanged?.Invoke(true, processName);
         }
     }
@@ -127,6 +132,46 @@ public sealed class GameWatcher
 
     private static string TrimExe(string name) =>
         name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? name[..^4] : name;
+
+    // Checking the locked process's own handle is far cheaper than enumerating every
+    // process by name, so it can run on every poll. Falls back to the name check when the
+    // handle is unavailable (anti-cheat, elevation) or the game relaunched itself.
+    private bool IsGameStillRunning()
+    {
+        if (_activeProcess != null)
+        {
+            try
+            {
+                if (!_activeProcess.HasExited) return true;
+            }
+            catch
+            {
+            }
+
+            _activeProcess.Dispose();
+            _activeProcess = null;
+        }
+
+        return IsProcessStillRunning(ActiveProcessName);
+    }
+
+    private static System.Diagnostics.Process? TryOpenProcess(IntPtr hwnd)
+    {
+        if (hwnd == IntPtr.Zero) return null;
+        try
+        {
+            GetWindowThreadProcessId(hwnd, out var pid);
+            if (pid == 0) return null;
+
+            var proc = System.Diagnostics.Process.GetProcessById((int)pid);
+            _ = proc.HasExited;
+            return proc;
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
     private static bool IsProcessStillRunning(string? processName)
     {

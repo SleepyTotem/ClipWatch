@@ -57,7 +57,7 @@
                         <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
                             <TextBlock x:Name="TimeLabel" Text="0:00 / 0:00" FontSize="12.5"
                                        FontWeight="SemiBold"/>
-                            <TextBlock x:Name="TempNotice" Text="Click outside or press Esc to discard"
+                            <TextBlock x:Name="TempNotice" Text="Press Esc or Discard to throw this replay away"
                                        Foreground="{StaticResource Faint}" FontSize="11" Margin="0,3,0,0"/>
                             <TextBlock x:Name="StatusText" Foreground="{StaticResource Faint}"
                                        FontSize="11" TextTrimming="CharacterEllipsis"/>

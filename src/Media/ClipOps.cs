@@ -25,7 +25,8 @@ public static class ClipOps
             if (File.Exists(target)) return "A clip with that name already exists.";
 
             ClipLibrary.InvalidateThumbnail(clip.Path);
-            File.Move(clip.Path, target);
+            using (Ffmpeg.ReleaseFile(clip.Path))
+                MoveWithRetry(clip.Path, target);
             clip.Path = target;
             clip.DisplayName = Path.GetFileNameWithoutExtension(target);
             return null;
@@ -45,6 +46,7 @@ public static class ClipOps
         try
         {
             ClipLibrary.InvalidateThumbnail(clip.Path);
+            using var hold = Ffmpeg.ReleaseFile(clip.Path);
 
             try
             {
@@ -67,6 +69,24 @@ public static class ClipOps
         catch (Exception ex)
         {
             return ex.Message;
+        }
+    }
+
+    // The video player lets go of a file a moment after it's stopped, so a move straight
+    // after closing playback can briefly fail with "in use".
+    public static void MoveWithRetry(string source, string target)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                File.Move(source, target);
+                return;
+            }
+            catch (IOException) when (attempt < 10 && File.Exists(source) && !File.Exists(target))
+            {
+                Thread.Sleep(100);
+            }
         }
     }
 

@@ -14,7 +14,7 @@
     <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
     <StartupObject>ClipWatch.Program</StartupObject>
     <ApplicationIcon>resources\clipwatch.ico</ApplicationIcon>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Product>ClipWatch</Product>
     <Company>ClipWatch</Company>
     <Description>Automatic game clip capture and trimming for OBS.</Description>

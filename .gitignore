@@ -1,0 +1,28 @@
+# Build output (matches at any depth, so installer/ and tests/ projects are covered too)
+bin/
+obj/
+dist/
+publish/
+artifacts/
+TestResults/
+*.nupkg
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.rsuser
+*.userprefs
+*.DotSettings.user
+
+# Logs and scratch
+*.log
+*.tmp
+*.bak
+
+# OS clutter
+Thumbs.db
+Desktop.ini
+.DS_Store

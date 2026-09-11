@@ -306,7 +306,7 @@ internal static class Program
     private static string Version() =>
         Assembly.GetExecutingAssembly().GetName().Version is { } v
             ? $"{v.Major}.{v.Minor}.{v.Build}"
-            : "1.0.0";
+            : "1.1.0";
 
     private static bool HasFlag(string[] args, params string[] names) =>
         args.Any(a => names.Any(n => string.Equals(a, n, StringComparison.OrdinalIgnoreCase)));

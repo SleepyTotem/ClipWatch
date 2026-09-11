@@ -670,6 +670,7 @@ public partial class EditorView : UserControl
                 var target = Path.Combine(outputFolder, newName + extension);
                 ClipLibrary.InvalidateThumbnail(sourcePath);
                 MediaProbe.Invalidate(sourcePath);
+                using var hold = Ffmpeg.ReleaseFile(sourcePath);
 
                 if (string.Equals(sourcePath, target, StringComparison.OrdinalIgnoreCase))
                 {

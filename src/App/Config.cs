@@ -17,7 +17,7 @@ public sealed class AudioLayer
 
 public sealed class Config
 {
-    public const int CurrentVersion = 4;
+    public const int CurrentVersion = 5;
 
     public int ConfigVersion { get; set; } = CurrentVersion;
 
@@ -27,7 +27,7 @@ public sealed class Config
 
     public string ObsPassword { get; set; } = "";
 
-    public int PollIntervalMs { get; set; } = 1000;
+    public int PollIntervalMs { get; set; } = 250;
 
     public int StopDelaySeconds { get; set; } = 10;
 
@@ -162,6 +162,9 @@ public sealed class Config
             UseFullscreenHeuristic = false;
             AutoConfigureObs = true;
         }
+
+        if (ConfigVersion < 5 && PollIntervalMs == 1000)
+            PollIntervalMs = 250;
 
         ConfigVersion = CurrentVersion;
         return true;
